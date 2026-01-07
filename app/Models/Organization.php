@@ -16,6 +16,9 @@ class Organization extends Model
         'slug',
         'logo',
         'timezone',
+        'locale',
+        'country_code',
+        'supported_locales',
         'subscription_plan_id',
         'status',
         'trial_ends_at',
@@ -25,6 +28,7 @@ class Organization extends Model
     {
         return [
             'trial_ends_at' => 'datetime',
+            'supported_locales' => 'array',
         ];
     }
 
@@ -58,6 +62,62 @@ class Organization extends Model
     public function settings()
     {
         return $this->hasMany(OrganizationSetting::class);
+    }
+
+    /**
+     * Get the organization's default locale or fallback to system default
+     */
+    public function getDefaultLocale(): string
+    {
+        return $this->locale ?? config('localization.default_locale', 'en');
+    }
+
+    /**
+     * Set the organization's default locale
+     */
+    public function setDefaultLocale(string $locale): void
+    {
+        $this->update(['locale' => $locale]);
+    }
+
+    /**
+     * Get the organization's supported locales
+     */
+    public function getSupportedLocales(): array
+    {
+        return $this->supported_locales ?? ['en'];
+    }
+
+    /**
+     * Add a locale to the organization's supported locales
+     */
+    public function addSupportedLocale(string $locale): void
+    {
+        $supportedLocales = $this->getSupportedLocales();
+        
+        if (!in_array($locale, $supportedLocales)) {
+            $supportedLocales[] = $locale;
+            $this->update(['supported_locales' => $supportedLocales]);
+        }
+    }
+
+    /**
+     * Remove a locale from the organization's supported locales
+     */
+    public function removeSupportedLocale(string $locale): void
+    {
+        $supportedLocales = $this->getSupportedLocales();
+        $supportedLocales = array_filter($supportedLocales, fn($l) => $l !== $locale);
+        
+        $this->update(['supported_locales' => array_values($supportedLocales)]);
+    }
+
+    /**
+     * Check if a locale is supported by the organization
+     */
+    public function supportsLocale(string $locale): bool
+    {
+        return in_array($locale, $this->getSupportedLocales());
     }
 }
 

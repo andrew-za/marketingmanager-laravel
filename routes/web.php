@@ -2,10 +2,19 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Campaign\CampaignController;
+use App\Http\Controllers\PublicController;
+use App\Http\Controllers\LocaleController;
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+// Locale switching routes
+Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
+Route::get('/locale/regional/{regionalLocale}', [LocaleController::class, 'switchRegional'])->name('locale.switch.regional');
+
+// Public Marketing Pages
+Route::get('/', [PublicController::class, 'index'])->name('home');
+Route::get('/features', [PublicController::class, 'features'])->name('features');
+Route::get('/pricing', [PublicController::class, 'pricing'])->name('pricing');
+Route::get('/about', [PublicController::class, 'about'])->name('about');
+Route::get('/contact', [PublicController::class, 'contact'])->name('contact');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');

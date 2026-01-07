@@ -18,6 +18,8 @@ class User extends Authenticatable
         'password',
         'avatar',
         'timezone',
+        'locale',
+        'country_code',
         'status',
         'user_type',
         'email_verified_at',
@@ -91,6 +93,30 @@ class User extends Authenticatable
         }
 
         return $this->agencies()->where('agencies.id', $agencyId)->exists();
+    }
+
+    /**
+     * Get the user's preferred locale or fallback to default
+     */
+    public function getPreferredLocale(): string
+    {
+        return $this->locale ?? config('localization.default_locale', 'en');
+    }
+
+    /**
+     * Set the user's locale preference
+     */
+    public function setPreferredLocale(string $locale): void
+    {
+        $this->update(['locale' => $locale]);
+    }
+
+    /**
+     * Check if user has a custom locale set
+     */
+    public function hasCustomLocale(): bool
+    {
+        return !empty($this->locale);
     }
 }
 
