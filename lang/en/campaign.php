@@ -52,3 +52,4 @@ return [
     'type_multi_channel' => 'Multi-Channel',
 ];
 
+

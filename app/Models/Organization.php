@@ -4,8 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Organization extends Model
 {
@@ -62,6 +63,88 @@ class Organization extends Model
     public function settings()
     {
         return $this->hasMany(OrganizationSetting::class);
+    }
+
+    /**
+     * Get products belonging to this organization
+     */
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    /**
+     * Get social connections for this organization
+     */
+    public function socialConnections(): HasMany
+    {
+        return $this->hasMany(SocialConnection::class);
+    }
+
+    /**
+     * Get email campaigns for this organization
+     */
+    public function emailCampaigns(): HasMany
+    {
+        return $this->hasMany(EmailCampaign::class);
+    }
+
+    /**
+     * Get contacts for this organization
+     */
+    public function contacts(): HasMany
+    {
+        return $this->hasMany(Contact::class);
+    }
+
+    /**
+     * Get contact lists for this organization
+     */
+    public function contactLists(): HasMany
+    {
+        return $this->hasMany(ContactList::class);
+    }
+
+    /**
+     * Get scheduled posts for this organization
+     */
+    public function scheduledPosts(): HasMany
+    {
+        return $this->hasMany(ScheduledPost::class);
+    }
+
+    /**
+     * Get tasks for this organization
+     */
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    /**
+     * Get projects for this organization
+     */
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
+    }
+
+    /**
+     * Get agencies this organization belongs to
+     */
+    public function agencies(): BelongsToMany
+    {
+        return $this->belongsToMany(Agency::class, 'agency_clients')
+            ->withPivot('status')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get subscription plan for this organization
+     */
+    public function subscriptionPlan(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionPlan::class, 'subscription_plan_id');
     }
 
     /**

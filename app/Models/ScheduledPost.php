@@ -22,6 +22,12 @@ class ScheduledPost extends Model
         'status',
         'metadata',
         'created_by',
+        'is_recurring',
+        'recurrence_type',
+        'recurrence_config',
+        'recurrence_end_date',
+        'recurrence_count',
+        'parent_post_id',
     ];
 
     protected function casts(): array
@@ -30,6 +36,9 @@ class ScheduledPost extends Model
             'scheduled_at' => 'datetime',
             'published_at' => 'datetime',
             'metadata' => 'array',
+            'is_recurring' => 'boolean',
+            'recurrence_config' => 'array',
+            'recurrence_end_date' => 'datetime',
         ];
     }
 
@@ -61,6 +70,16 @@ class ScheduledPost extends Model
     public function approvals(): HasMany
     {
         return $this->hasMany(ContentApproval::class, 'scheduled_post_id');
+    }
+
+    public function parentPost(): BelongsTo
+    {
+        return $this->belongsTo(ScheduledPost::class, 'parent_post_id');
+    }
+
+    public function recurringInstances(): HasMany
+    {
+        return $this->hasMany(ScheduledPost::class, 'parent_post_id');
     }
 
     public function markAsPublished(): void

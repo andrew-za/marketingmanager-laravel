@@ -3,12 +3,17 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\Auth\SessionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class LoginController extends Controller
 {
+    public function __construct(
+        private SessionService $sessionService
+    ) {}
+
     public function showLoginForm()
     {
         return view('auth.login');
@@ -22,9 +27,18 @@ class LoginController extends Controller
         ]);
 
         if (Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
-            $request->session()->regenerate();
+            $user = Auth::user();
 
-            return $this->authenticated($request, Auth::user());
+            if ($user->hasTwoFactorEnabled() && !$request->session()->has('two_factor_verified')) {
+                $request->session()->put('login.id', $user->id);
+                Auth::logout();
+                return redirect()->route('two-factor.challenge');
+            }
+
+            $request->session()->regenerate();
+            $this->sessionService->createOrUpdateSession($user, $request);
+
+            return $this->authenticated($request, $user);
         }
 
         throw ValidationException::withMessages([
@@ -44,6 +58,13 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
+        $user = Auth::user();
+        $sessionId = $request->session()->getId();
+
+        if ($user && $sessionId) {
+            $this->sessionService->revokeSession($user, $sessionId);
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

@@ -31,9 +31,12 @@ class RegisterController extends Controller
             'user_type' => 'customer',
         ]);
 
+        $user->sendEmailVerificationNotification();
+
         Auth::login($user);
 
-        return redirect()->route('main.organizations');
+        return redirect()->route('main.organizations')
+            ->with('status', __('A verification link has been sent to your email address.'));
     }
 }
 

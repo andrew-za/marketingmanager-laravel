@@ -26,6 +26,14 @@ class Brand extends Model
         'business_model',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'keywords' => 'array',
+            'avoid_keywords' => 'array',
+        ];
+    }
+
     public function organization(): BelongsTo
     {
         return $this->belongsTo(Organization::class);
@@ -46,4 +54,5 @@ class Brand extends Model
         return $this->hasMany(Review::class);
     }
 }
+
 

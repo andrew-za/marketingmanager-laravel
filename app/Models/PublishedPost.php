@@ -5,25 +5,32 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Support\Traits\HasOrganizationScope;
 
 class PublishedPost extends Model
 {
-    use HasFactory;
+    use HasFactory, HasOrganizationScope;
 
     protected $fillable = [
         'scheduled_post_id',
-        'connection_id',
-        'platform_post_id',
+        'organization_id',
+        'social_connection_id',
+        'platform',
+        'external_post_id',
+        'external_post_url',
         'status',
         'published_at',
-        'engagement_metrics',
+        'platform_response',
+        'metrics',
+        'error_message',
     ];
 
     protected function casts(): array
     {
         return [
             'published_at' => 'datetime',
-            'engagement_metrics' => 'array',
+            'platform_response' => 'array',
+            'metrics' => 'array',
         ];
     }
 
@@ -32,9 +39,14 @@ class PublishedPost extends Model
         return $this->belongsTo(ScheduledPost::class);
     }
 
-    public function connection(): BelongsTo
+    public function organization(): BelongsTo
     {
-        return $this->belongsTo(SocialConnection::class, 'connection_id');
+        return $this->belongsTo(Organization::class);
+    }
+
+    public function socialConnection(): BelongsTo
+    {
+        return $this->belongsTo(SocialConnection::class, 'social_connection_id');
     }
 }
 

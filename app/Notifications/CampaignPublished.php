@@ -29,3 +29,4 @@ class CampaignPublished extends Notification
     }
 }
 
+

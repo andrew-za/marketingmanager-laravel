@@ -36,3 +36,4 @@ class CampaignResource extends JsonResource
     }
 }
 
+

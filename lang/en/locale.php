@@ -65,3 +65,4 @@ return [
     'rtl' => 'Right to Left',
 ];
 
+

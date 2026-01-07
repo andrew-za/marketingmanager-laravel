@@ -103,3 +103,4 @@ trait HasLocale
     }
 }
 
+

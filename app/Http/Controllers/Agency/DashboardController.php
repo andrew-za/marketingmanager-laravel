@@ -3,13 +3,18 @@
 namespace App\Http\Controllers\Agency;
 
 use App\Http\Controllers\Controller;
+use App\Models\Agency;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request, $agencyId)
+    /**
+     * Redirect to clients page (default route)
+     */
+    public function index(Request $request, Agency $agency)
     {
-        return view('agency.dashboard.index', compact('agencyId'));
+        return redirect()->route('agency.clients.index', ['agency' => $agency]);
     }
 }
+
 

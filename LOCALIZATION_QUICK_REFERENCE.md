@@ -209,3 +209,4 @@ APP_FAKER_LOCALE=en_US
 - Cache duration: 24 hours (configurable)
 - Session stores current locale
 
+

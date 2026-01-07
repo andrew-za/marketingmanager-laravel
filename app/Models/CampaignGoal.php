@@ -31,3 +31,4 @@ class CampaignGoal extends Model
     }
 }
 
+

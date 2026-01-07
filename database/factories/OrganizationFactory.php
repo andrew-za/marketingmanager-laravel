@@ -21,3 +21,4 @@ class OrganizationFactory extends Factory
     }
 }
 
+

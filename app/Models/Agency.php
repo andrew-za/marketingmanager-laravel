@@ -17,7 +17,15 @@ class Agency extends Model
         'owner_id',
         'logo',
         'status',
+        'settings',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'settings' => 'array',
+        ];
+    }
 
     public function owner(): BelongsTo
     {
@@ -43,4 +51,5 @@ class Agency extends Model
             ->withTimestamps();
     }
 }
+
 

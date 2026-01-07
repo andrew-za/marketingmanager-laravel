@@ -201,3 +201,4 @@ All styles are in `public/css/public.css` with:
 - All interactive elements have hover states
 - Mobile menu is functional with JavaScript toggle
 
+

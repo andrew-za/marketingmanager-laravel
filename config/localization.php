@@ -143,3 +143,4 @@ return [
     'cache_duration' => 1440, // 24 hours
 ];
 
+

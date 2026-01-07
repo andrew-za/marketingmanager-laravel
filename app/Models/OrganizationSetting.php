@@ -22,3 +22,4 @@ class OrganizationSetting extends Model
     }
 }
 
+

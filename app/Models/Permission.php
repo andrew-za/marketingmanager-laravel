@@ -14,3 +14,4 @@ class Permission extends SpatiePermission
     ];
 }
 
+

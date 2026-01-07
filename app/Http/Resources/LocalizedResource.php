@@ -78,3 +78,4 @@ class LocalizedResource extends JsonResource
     }
 }
 
+

@@ -13,3 +13,4 @@ interface CampaignRepositoryInterface
     public function findByOrganization(int $organizationId): \Illuminate\Database\Eloquent\Collection;
 }
 
+
