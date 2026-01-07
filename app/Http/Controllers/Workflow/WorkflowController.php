@@ -37,6 +37,24 @@ class WorkflowController extends Controller
         return WorkflowResource::collection($workflows);
     }
 
+    public function builder(Request $request): \Illuminate\View\View
+    {
+        $organizationId = auth()->user()->primaryOrganization()->id;
+        $organization = auth()->user()->primaryOrganization();
+
+        $workflow = null;
+        if ($request->has('id')) {
+            $workflow = Workflow::where('organization_id', $organizationId)
+                ->where('id', $request->id)
+                ->firstOrFail();
+        }
+
+        return view('workflows.builder', [
+            'organization' => $organization,
+            'workflow' => $workflow,
+        ]);
+    }
+
     public function store(CreateWorkflowRequest $request): JsonResponse
     {
         $workflow = $this->workflowService->createWorkflow(

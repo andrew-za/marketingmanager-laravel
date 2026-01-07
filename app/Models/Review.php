@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Support\Traits\HasOrganizationScope;
 
 class Review extends Model
@@ -40,6 +41,16 @@ class Review extends Model
     public function brand(): BelongsTo
     {
         return $this->belongsTo(Brand::class);
+    }
+
+    public function reviewSource(): BelongsTo
+    {
+        return $this->belongsTo(ReviewSource::class, 'platform', 'slug');
+    }
+
+    public function responses(): HasMany
+    {
+        return $this->hasMany(ReviewResponse::class);
     }
 }
 

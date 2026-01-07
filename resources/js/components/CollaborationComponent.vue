@@ -280,8 +280,11 @@ export default {
         this.setupBroadcasting();
     },
     beforeUnmount() {
+        if (this.echo && this.selectedTopic) {
+            this.echo.leave(`chat.topic.${this.selectedTopic.id}`);
+        }
         if (this.echo) {
-            this.echo.disconnect();
+            this.echo.leave(`organization.${this.organizationId}`);
         }
     },
     methods: {
@@ -299,40 +302,57 @@ export default {
         },
         async selectTopic(topic) {
             this.selectedTopic = topic;
+            this.messages = [];
+            
             try {
                 const response = await axios.get(`/main/${this.organizationId}/collaboration/topics/${topic.id}`);
                 if (response.data.success) {
-                    this.messages = response.data.data.messages?.data || [];
+                    this.messages = response.data.data.messages?.data || response.data.data.messages || [];
+                    
+                    // Mark topic as read
+                    const topicIndex = this.topics.findIndex(t => t.id === topic.id);
+                    if (topicIndex !== -1) {
+                        this.topics[topicIndex].unread_count = 0;
+                    }
+                    
                     this.$nextTick(() => {
                         this.scrollToBottom();
                     });
                 }
             } catch (error) {
                 console.error('Failed to load topic messages:', error);
+                alert('Failed to load messages. Please try again.');
             }
         },
         async sendMessage() {
             if (!this.newMessage.trim() || !this.selectedTopic) return;
 
             this.sending = true;
+            const messageText = this.newMessage.trim();
+            this.newMessage = ''; // Clear input immediately for better UX
+            
             try {
                 const response = await axios.post(
                     `/main/${this.organizationId}/collaboration/topics/${this.selectedTopic.id}/messages`,
                     {
-                        message: this.newMessage,
+                        message: messageText,
                         attachments: []
                     }
                 );
                 if (response.data.success) {
-                    this.messages.push(response.data.data);
-                    this.newMessage = '';
+                    // Message will be added via broadcasting, but add it immediately for instant feedback
+                    const exists = this.messages.some(m => m.id === response.data.data.id);
+                    if (!exists) {
+                        this.messages.push(response.data.data);
+                    }
                     this.$nextTick(() => {
                         this.scrollToBottom();
                     });
                 }
             } catch (error) {
                 console.error('Failed to send message:', error);
-                alert('Failed to send message. Please try again.');
+                this.newMessage = messageText; // Restore message on error
+                alert(error.response?.data?.message || 'Failed to send message. Please try again.');
             } finally {
                 this.sending = false;
             }
@@ -388,28 +408,68 @@ export default {
             }
         },
         setupBroadcasting() {
-            if (typeof window.Echo !== 'undefined') {
-                this.echo = window.Echo;
-                
-                const channel = this.echo.join(`organization.${this.organizationId}`);
-                
-                channel.listen('.message.sent', (data) => {
-                    if (this.selectedTopic && data.chat_topic_id === this.selectedTopic.id) {
+            if (typeof window.Echo === 'undefined') {
+                console.warn('Laravel Echo is not initialized. Real-time features will not work.');
+                return;
+            }
+
+            this.echo = window.Echo;
+            
+            // Join organization channel for presence
+            const organizationChannel = this.echo.join(`organization.${this.organizationId}`);
+            
+            // Listen for new messages in the organization
+            organizationChannel.listen('.message.sent', (data) => {
+                if (this.selectedTopic && data.chat_topic_id === this.selectedTopic.id) {
+                    // Check if message already exists to avoid duplicates
+                    const exists = this.messages.some(m => m.id === data.id);
+                    if (!exists) {
                         this.messages.push(data);
                         this.$nextTick(() => {
                             this.scrollToBottom();
                         });
                     }
-                });
+                } else {
+                    // Update unread count for the topic
+                    const topic = this.topics.find(t => t.id === data.chat_topic_id);
+                    if (topic) {
+                        topic.unread_count = (topic.unread_count || 0) + 1;
+                    }
+                }
+            });
 
-                channel.listen('.topic.created', () => {
-                    this.loadData();
-                });
+            // Listen for new topics
+            organizationChannel.listen('.topic.created', (data) => {
+                this.loadData();
+            });
 
-                channel.listen('.approval.status.changed', () => {
-                    this.loadData();
-                });
-            }
+            // Listen for approval status changes
+            organizationChannel.listen('.approval.status.changed', () => {
+                this.loadData();
+            });
+
+            // Also listen to specific topic channel for better performance
+            this.$watch('selectedTopic', (newTopic, oldTopic) => {
+                if (oldTopic) {
+                    // Leave old topic channel
+                    this.echo.leave(`chat.topic.${oldTopic.id}`);
+                }
+                
+                if (newTopic) {
+                    // Join new topic channel
+                    const topicChannel = this.echo.join(`chat.topic.${newTopic.id}`);
+                    
+                    topicChannel.listen('.message.sent', (data) => {
+                        const exists = this.messages.some(m => m.id === data.id);
+                        if (!exists) {
+                            this.messages.push(data);
+                            this.$nextTick(() => {
+                                this.scrollToBottom();
+                            });
+                        }
+                    });
+                }
+            }, { immediate: true });
         },
         scrollToBottom() {
             if (this.$refs.messagesContainer) {
@@ -435,6 +495,34 @@ export default {
 <style scoped>
 .collaboration-container {
     height: calc(100vh - 200px);
+}
+
+.card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+}
+
+.btn {
+    @apply px-4 py-2 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2;
+}
+
+.btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+}
+
+.btn-secondary {
+    @apply bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-gray-500;
+}
+
+.btn-success {
+    @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+}
+
+.btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+}
+
+.btn-sm {
+    @apply px-3 py-1.5 text-sm;
 }
 </style>
 

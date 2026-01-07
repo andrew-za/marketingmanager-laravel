@@ -33,6 +33,61 @@ class ChatbotController extends Controller
         return ChatbotResource::collection($chatbots);
     }
 
+    public function builder(Request $request): \Illuminate\View\View
+    {
+        $organizationId = auth()->user()->primaryOrganization()->id;
+        $organization = auth()->user()->primaryOrganization();
+
+        $chatbot = null;
+        if ($request->has('id')) {
+            $chatbot = Chatbot::where('organization_id', $organizationId)
+                ->where('id', $request->id)
+                ->firstOrFail();
+        }
+
+        return view('chatbots.builder', [
+            'organization' => $organization,
+            'chatbot' => $chatbot,
+        ]);
+    }
+
+    public function deployment(Request $request): \Illuminate\View\View
+    {
+        $organizationId = auth()->user()->primaryOrganization()->id;
+        $organization = auth()->user()->primaryOrganization();
+
+        $chatbot = null;
+        if ($request->has('id')) {
+            $chatbot = Chatbot::where('organization_id', $organizationId)
+                ->where('id', $request->id)
+                ->with(['conversations', 'leads'])
+                ->firstOrFail();
+        }
+
+        return view('chatbots.deployment', [
+            'organization' => $organization,
+            'chatbot' => $chatbot,
+        ]);
+    }
+
+    public function analytics(Request $request): \Illuminate\View\View
+    {
+        $organizationId = auth()->user()->primaryOrganization()->id;
+        $organization = auth()->user()->primaryOrganization();
+
+        $chatbot = null;
+        if ($request->has('id')) {
+            $chatbot = Chatbot::where('organization_id', $organizationId)
+                ->where('id', $request->id)
+                ->firstOrFail();
+        }
+
+        return view('chatbots.analytics', [
+            'organization' => $organization,
+            'chatbot' => $chatbot,
+        ]);
+    }
+
     public function store(CreateChatbotRequest $request): JsonResponse
     {
         $chatbot = $this->chatbotService->createChatbot(

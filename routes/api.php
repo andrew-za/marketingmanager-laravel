@@ -138,4 +138,10 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'api.rate_limit'])->group(funct
         Route::put('projects/{projectId}', [TasksProjectsController::class, 'updateProject'])->middleware('permission:projects.update')->name('api.projects.update');
         Route::delete('projects/{projectId}', [TasksProjectsController::class, 'deleteProject'])->middleware('permission:projects.delete')->name('api.projects.destroy');
     });
+
+    // Onboarding
+    Route::prefix('onboarding')->group(function () {
+        Route::post('chat', [\App\Http\Controllers\Api\OnboardingController::class, 'chat'])->name('api.onboarding.chat');
+        Route::post('complete', [\App\Http\Controllers\Api\OnboardingController::class, 'complete'])->name('api.onboarding.complete');
+    });
 });

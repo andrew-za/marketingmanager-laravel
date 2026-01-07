@@ -162,10 +162,13 @@ Route::middleware(['auth', 'verified'])->prefix('main')->name('main.')->group(fu
             Route::get('/', [CampaignController::class, 'index'])->name('index');
             Route::get('/create', [CampaignController::class, 'create'])->name('create');
             Route::post('/', [CampaignController::class, 'store'])->name('store');
+            Route::post('/generate-plan', [CampaignController::class, 'generatePlan'])->name('generate-plan');
+            Route::post('/ai/suggestions', [CampaignController::class, 'getAISuggestions'])->name('ai.suggestions');
             Route::get('/{campaign}', [CampaignController::class, 'show'])->name('show');
             Route::put('/{campaign}', [CampaignController::class, 'update'])->name('update');
             Route::delete('/{campaign}', [CampaignController::class, 'destroy'])->name('destroy');
             Route::post('/{campaign}/submit-for-review', [CampaignController::class, 'submitForReview'])->name('submit-for-review');
+            Route::post('/{campaign}/generate-content', [CampaignController::class, 'generateContent'])->name('generate-content');
             Route::post('/{campaign}/publish', [CampaignController::class, 'publish'])->name('publish');
             Route::post('/{campaign}/pause', [CampaignController::class, 'pause'])->name('pause');
             Route::post('/{campaign}/resume', [CampaignController::class, 'resume'])->name('resume');
@@ -528,6 +531,7 @@ Route::middleware(['auth', 'verified'])->prefix('main')->name('main.')->group(fu
         // Automation & Workflows
         Route::middleware('not.client')->prefix('workflows')->name('workflows.')->group(function () {
             Route::get('/', [App\Http\Controllers\Workflow\WorkflowController::class, 'index'])->name('index');
+            Route::get('/builder', [App\Http\Controllers\Workflow\WorkflowController::class, 'builder'])->name('builder');
             Route::post('/', [App\Http\Controllers\Workflow\WorkflowController::class, 'store'])->name('store');
             Route::get('/{workflow}', [App\Http\Controllers\Workflow\WorkflowController::class, 'show'])->name('show');
             Route::put('/{workflow}', [App\Http\Controllers\Workflow\WorkflowController::class, 'update'])->name('update');
@@ -538,6 +542,9 @@ Route::middleware(['auth', 'verified'])->prefix('main')->name('main.')->group(fu
         // Website Chatbot
         Route::middleware('not.client')->prefix('chatbots')->name('chatbots.')->group(function () {
             Route::get('/', [App\Http\Controllers\Chatbot\ChatbotController::class, 'index'])->name('index');
+            Route::get('/builder', [App\Http\Controllers\Chatbot\ChatbotController::class, 'builder'])->name('builder');
+            Route::get('/deployment', [App\Http\Controllers\Chatbot\ChatbotController::class, 'deployment'])->name('deployment');
+            Route::get('/analytics', [App\Http\Controllers\Chatbot\ChatbotController::class, 'analytics'])->name('analytics');
             Route::post('/', [App\Http\Controllers\Chatbot\ChatbotController::class, 'store'])->name('store');
             Route::get('/{chatbot}', [App\Http\Controllers\Chatbot\ChatbotController::class, 'show'])->name('show');
             Route::put('/{chatbot}', [App\Http\Controllers\Chatbot\ChatbotController::class, 'update'])->name('update');

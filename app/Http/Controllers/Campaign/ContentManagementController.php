@@ -29,6 +29,53 @@ class ContentManagementController extends Controller
     {
         $this->authorize('update', $campaign);
 
+        // Handle bulk posts creation
+        if ($request->has('posts') && is_array($request->posts)) {
+            $validated = $request->validate([
+                'posts' => 'required|array',
+                'posts.*.channel' => 'required|string',
+                'posts.*.platform' => 'required|string',
+                'posts.*.content' => 'required|string',
+                'posts.*.hashtags' => 'nullable|array',
+                'posts.*.scheduledAt' => 'nullable|date',
+            ]);
+
+            $scheduledPosts = [];
+            $channels = \App\Models\Channel::where('organization_id', $organizationId)
+                ->get()
+                ->keyBy(function ($channel) {
+                    return strtolower($channel->platform);
+                });
+
+            foreach ($validated['posts'] as $postData) {
+                $channel = $channels->get(strtolower($postData['platform']));
+                if (!$channel) continue;
+
+                $scheduledPost = ScheduledPost::create([
+                    'organization_id' => $organizationId,
+                    'campaign_id' => $campaign->id,
+                    'channel_id' => $channel->id,
+                    'content' => $postData['content'],
+                    'scheduled_at' => $postData['scheduledAt'] ?? now()->addDay(),
+                    'status' => 'pending',
+                    'metadata' => [
+                        'hashtags' => $postData['hashtags'] ?? [],
+                        'image_suggestions' => $postData['imageSuggestions'] ?? [],
+                    ],
+                    'created_by' => $request->user()->id,
+                ]);
+
+                $scheduledPosts[] = $scheduledPost->load(['channel', 'creator']);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $scheduledPosts,
+                'message' => 'Content scheduled successfully.',
+            ], 201);
+        }
+
+        // Handle single post creation
         $validated = $request->validate([
             'channel_id' => 'required|exists:channels,id',
             'content' => 'required|string',

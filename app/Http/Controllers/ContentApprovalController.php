@@ -32,6 +32,20 @@ class ContentApprovalController extends Controller
             $query->where('status', $request->get('status'));
         }
 
+        if ($request->has('channel_id')) {
+            $query->whereHas('scheduledPost', function ($q) use ($request) {
+                $q->where('channel_id', $request->get('channel_id'));
+            });
+        }
+
+        if ($request->has('author_id')) {
+            $query->where('requested_by', $request->get('author_id'));
+        }
+
+        if ($request->has('date')) {
+            $query->whereDate('requested_at', $request->get('date'));
+        }
+
         $approvals = $query->with(['scheduledPost.campaign', 'scheduledPost.channel', 'requestedBy', 'approvedBy'])
             ->orderBy('requested_at', 'desc')
             ->paginate();

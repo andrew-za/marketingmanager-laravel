@@ -31,6 +31,28 @@ class CampaignController extends Controller
         return CampaignResource::collection($campaigns);
     }
 
+    public function create(Request $request)
+    {
+        $organizationId = auth()->user()->primaryOrganization()->id;
+        $brandId = $request->query('brand_id');
+        
+        $brands = \App\Models\Brand::where('organization_id', $organizationId)->get();
+        $products = \App\Models\Product::where('organization_id', $organizationId)
+            ->when($brandId, fn($q) => $q->where('brand_id', $brandId))
+            ->get();
+        $channels = \App\Models\Channel::where('organization_id', $organizationId)
+            ->where('status', 'active')
+            ->get();
+
+        return view('campaigns.create', [
+            'organizationId' => $organizationId,
+            'brandId' => $brandId,
+            'brands' => $brands,
+            'products' => $products,
+            'channels' => $channels,
+        ]);
+    }
+
     public function store(CreateCampaignRequest $request): JsonResponse
     {
         $campaign = $this->campaignService->createCampaign(
@@ -265,6 +287,90 @@ class CampaignController extends Controller
             'success' => true,
             'message' => 'Products unlinked from campaign successfully.',
         ]);
+    }
+
+    public function generatePlan(Request $request): JsonResponse
+    {
+        $request->validate([
+            'goal' => ['required', 'string'],
+            'goal_type' => ['required', 'string'],
+            'channel_ids' => ['required', 'array', 'min:1'],
+            'channel_ids.*' => ['exists:channels,id'],
+            'brand_id' => ['nullable', 'exists:brands,id'],
+            'product_id' => ['nullable', 'exists:products,id'],
+            'goal_prompt' => ['nullable', 'url'],
+        ]);
+
+        try {
+            $result = $this->campaignService->generateCampaignPlan(
+                $request->all(),
+                $request->user()
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $result,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function generateContent(Request $request, Campaign $campaign): JsonResponse
+    {
+        $this->authorize('update', $campaign);
+
+        $request->validate([
+            'channels' => ['required', 'array', 'min:1'],
+            'channels.*' => ['exists:channels,id'],
+        ]);
+
+        try {
+            $result = $this->campaignService->generateCampaignContent(
+                $campaign,
+                $request->user(),
+                $request->channels
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $result,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getAISuggestions(Request $request): JsonResponse
+    {
+        $request->validate([
+            'brand_id' => ['nullable', 'exists:brands,id'],
+            'product_id' => ['nullable', 'exists:products,id'],
+        ]);
+
+        try {
+            $suggestions = $this->campaignService->getCampaignSuggestions(
+                $request->user(),
+                $request->brand_id,
+                $request->product_id
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $suggestions,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
 
